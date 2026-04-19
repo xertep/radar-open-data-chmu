@@ -114,11 +114,17 @@ file_url = (
 
 data, extent = load_radar_image(file_url)
 
-fig, ax = plt.subplots(figsize=(10, 6))
+fig = plt.figure(figsize=(10, 6))
+#ax = plt.axes(projection=ccrs.Mercator())
+ax = plt.axes(projection=ccrs.Mercator())
+
+ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
 
 ax.imshow(
     data,
     origin="lower",
+    extent=extent,
+    transform=ccrs.PlateCarree(),
     interpolation="nearest"
 )
 
@@ -127,17 +133,14 @@ ax.imshow(
 ax.add_feature(cfeature.BORDERS, linewidth=1)
 ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
 
-kraje.plot(
-    ax=ax,
+ax.add_geometries(
+    kraje,
+    crs=ccrs.PlateCarree(),
     edgecolor="black",
     facecolor="none",
     linewidth=0.4
 )
 
-ax.set_xlim(0, data.shape[1])
-ax.set_ylim(0, data.shape[0])
-
-#ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
 ax.set_axis_off()
 
 st.pyplot(fig)

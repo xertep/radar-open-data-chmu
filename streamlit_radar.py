@@ -87,39 +87,6 @@ def load_kraje():
 kraje = load_kraje()
 
 
-def load_radar_image(file_url):
-    response = requests.get(file_url)
-    response.raise_for_status()
-
-    with tempfile.NamedTemporaryFile(suffix=".hdf") as tmp:
-        tmp.write(response.content)
-        tmp.flush()
-
-        with h5py.File(tmp.name, "r") as f:
-            raw = f["dataset1/data1/data"][:]
-            attrs = f["dataset1/data1/what"].attrs
-            where = f["where"].attrs
-
-            gain = attrs["gain"]
-            offset = attrs["offset"]
-            nodata = attrs["nodata"]
-            undetect = attrs["undetect"]
-
-            data = raw.astype(float)
-            data[raw == nodata] = np.nan
-            data[raw == undetect] = np.nan
-
-            data = data * gain + offset
-
-            extent = [
-                where["LL_lon"],
-                where["LR_lon"],
-                where["LL_lat"],
-                where["UL_lat"]
-            ]
-
-            return data, extent
-
 
 radar_files = get_latest_radar_files()
 

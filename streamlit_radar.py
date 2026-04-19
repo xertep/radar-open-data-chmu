@@ -116,7 +116,7 @@ data, extent = load_radar_image(file_url)
 
 fig = plt.figure(figsize=(10, 6))
 #ax = plt.axes(projection=ccrs.Mercator())
-ax = plt.axes(projection=ccrs.PlateCarree())
+ax = plt.axes(projection=ccrs.Mercator())
 
 ax.imshow(
     data,
@@ -139,7 +139,7 @@ ax.add_geometries(
     linewidth=0.4
 )
 
-ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.Mercator())
+#ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.Mercator())
 ax.set_axis_off()
 
 st.pyplot(fig)

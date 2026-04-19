@@ -48,9 +48,10 @@ def get_latest_radar_files(n=10):
 @st.cache_data(ttl=60, show_spinner=False)
 def load_radar_batch(file_urls):
     frames = []
+    session = requests.Session()
 
     for url in file_urls:
-        response = requests.get(url)
+        response = session.get(url, timeout=10)
         response.raise_for_status()
 
         with tempfile.NamedTemporaryFile(suffix=".hdf") as tmp:
@@ -60,7 +61,6 @@ def load_radar_batch(file_urls):
             with h5py.File(tmp.name, "r") as f:
                 raw = f["dataset1/data1/data"][:]
                 attrs = f["dataset1/data1/what"].attrs
-                where = f["where"].attrs
 
                 gain = attrs["gain"]
                 offset = attrs["offset"]
@@ -77,6 +77,25 @@ def load_radar_batch(file_urls):
 
     return frames
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def get_extent(file_url):
+    response = requests.get(file_url)
+    response.raise_for_status()
+
+    with tempfile.NamedTemporaryFile(suffix=".hdf") as tmp:
+        tmp.write(response.content)
+        tmp.flush()
+
+        with h5py.File(tmp.name, "r") as f:
+            where = f["where"].attrs
+
+            return [
+                where["LL_lon"],
+                where["LR_lon"],
+                where["LL_lat"],
+                where["UL_lat"]
+            ]
+
 
 @st.cache_data(show_spinner=False)
 def load_kraje():
@@ -91,22 +110,13 @@ kraje = load_kraje()
 radar_files = get_latest_radar_files()
 
 base_url = "https://opendata.chmi.cz/meteorology/weather/radar/composite/maxz/hdf5/"
-file_urls = [base_url + f for f in radar_files]
+file_urls = [base_url + f for f in radar_files[::-1]]
 
+extent = get_extent(file_urls[-1])  # any file works, but last is fine
 
 if not radar_files:
     st.error("Nepodařilo se načíst radarová data.")
     st.stop()
-
-
-selected_file = st.select_slider(
-    "Vyber radarový snímek",
-    options=radar_files[::-1],
-    format_func=lambda x: datetime.strptime(
-        x[-18:-4], "%Y%m%d%H%M%S"
-    ).strftime("%d.%m. %H:%M"),
-    value=radar_files[0]
-)
 
 
 
@@ -116,9 +126,8 @@ frame_idx = st.slider(
     "Radar čas",
     0,
     len(frames) - 1,
-    0
+    len(frames) - 1  # default = newest (important!)
 )
-
 
 data = frames[frame_idx]
 

@@ -121,8 +121,11 @@ ax.imshow(
     data,
     origin="lower",
     extent=extent,
-    transform=ccrs.Mercator()
+    transform=ccrs.PlateCarree(),
+    interpolation="nearest"
 )
+
+ax.set_extent([11.2, 19.7, 47.8, 51.7], crs=ccrs.PlateCarree())
 
 ax.add_feature(cfeature.BORDERS, linewidth=1)
 ax.add_feature(cfeature.COASTLINE, linewidth=0.8)

@@ -40,6 +40,21 @@ def get_latest_radar_files(n=10):
         return []
 
 
+def inspect_hdf(file_url):
+    response = requests.get(file_url)
+    response.raise_for_status()
+
+    with tempfile.NamedTemporaryFile(suffix=".hdf") as tmp:
+        tmp.write(response.content)
+        tmp.flush()
+
+        with h5py.File(tmp.name, "r") as f:
+            def walk(name, obj):
+                st.write(name)
+
+            f.visititems(walk)
+
+
 radar_files = get_latest_radar_files()
 
 if not radar_files:
@@ -63,3 +78,6 @@ file_url = (
 )
 
 st.write(file_url)
+
+inspect_hdf(file_url)
+

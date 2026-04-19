@@ -123,6 +123,11 @@ def load_radar_image(file_url):
 
 radar_files = get_latest_radar_files()
 
+base_url = "https://opendata.chmi.cz/meteorology/weather/radar/composite/maxz/hdf5/"
+file_urls = [base_url + f for f in radar_files]
+
+_, extent = load_radar_image(file_urls[0])
+
 if not radar_files:
     st.error("Nepodařilo se načíst radarová data.")
     st.stop()
@@ -138,11 +143,6 @@ selected_file = st.select_slider(
 )
 
 
-base_url = "https://opendata.chmi.cz/meteorology/weather/radar/composite/maxz/hdf5/"
-
-file_urls = [
-    base_url + f for f in radar_files
-]
 
 frames = load_radar_batch(file_urls)
 

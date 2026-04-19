@@ -5,6 +5,12 @@ from datetime import datetime, timedelta
 import h5py
 import tempfile
 
+import numpy as np
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import geopandas as gpd
+
 
 @st.cache_data(ttl=60, show_spinner=False)
 def get_latest_radar_files(n=10):
@@ -40,7 +46,16 @@ def get_latest_radar_files(n=10):
         return []
 
 
-def inspect_radar_data(file_url):
+@st.cache_data(show_spinner=False)
+def load_kraje():
+    gdf = gpd.read_file("kraje_wgs84.geojson")
+    gdf["geometry"] = gdf.geometry.simplify(0.02, preserve_topology=True)
+    return gdf.geometry
+
+kraje = load_kraje()
+
+
+def load_radar_image(file_url):
     response = requests.get(file_url)
     response.raise_for_status()
 
@@ -49,18 +64,29 @@ def inspect_radar_data(file_url):
         tmp.flush()
 
         with h5py.File(tmp.name, "r") as f:
-            data = f["dataset1/data1/data"][:]
+            raw = f["dataset1/data1/data"][:]
+            attrs = f["dataset1/data1/what"].attrs
+            where = f["where"].attrs
 
-            st.write("Shape:", data.shape)
-            st.write("Dtype:", data.dtype)
+            gain = attrs["gain"]
+            offset = attrs["offset"]
+            nodata = attrs["nodata"]
+            undetect = attrs["undetect"]
 
-            st.write("where attrs:")
-            for k, v in f["where"].attrs.items():
-                st.write(k, v)
+            data = raw.astype(float)
+            data[raw == nodata] = np.nan
+            data[raw == undetect] = np.nan
 
-            st.write("data attrs:")
-            for k, v in f["dataset1/data1/what"].attrs.items():
-                st.write(k, v)
+            data = data * gain + offset
+
+            extent = [
+                where["LL_lon"],
+                where["LR_lon"],
+                where["LL_lat"],
+                where["UL_lat"]
+            ]
+
+            return data, extent
 
 
 radar_files = get_latest_radar_files()
@@ -85,7 +111,34 @@ file_url = (
     + selected_file
 )
 
+
+data, extent = load_radar_image(file_url)
+
+fig = plt.figure(figsize=(10, 6))
+ax = plt.axes(projection=ccrs.Mercator())
+
+ax.imshow(
+    data,
+    origin="lower",
+    extent=extent,
+    transform=ccrs.PlateCarree()
+)
+
+ax.add_feature(cfeature.BORDERS, linewidth=1)
+ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
+
+ax.add_geometries(
+    kraje,
+    crs=ccrs.PlateCarree(),
+    edgecolor="black",
+    facecolor="none",
+    linewidth=0.4
+)
+
+ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
+ax.set_axis_off()
+
+st.pyplot(fig)
+plt.close(fig)
+
 st.write(file_url)
-
-inspect_radar_data(file_url)
-

@@ -111,19 +111,6 @@ def load_kraje():
 kraje = load_kraje()
 
 
-if "playing" not in st.session_state:
-    st.session_state.playing = False
-
-col1, col2 = st.columns(2)
-
-with col1:
-    if st.button("▶ Play / Pause"):
-        st.session_state.playing = not st.session_state.playing
-
-if st.session_state.playing:
-    frame_idx = (frame_idx + 1) % len(frames)
-    st.session_state.frame_idx = frame_idx
-    st.rerun()
 
 
 radar_files = get_latest_radar_files()
@@ -141,16 +128,24 @@ if not radar_files:
 
 frames = load_radar_batch(file_urls)
 
-#frame_idx = st.slider(
-#    "Radar čas",
-#    0,
-#    len(frames) - 1,
-#    len(frames) - 1  # default = newest (important!)
-#)
-
-
 if "frame_idx" not in st.session_state:
     st.session_state.frame_idx = len(frames) - 1
+
+if "playing" not in st.session_state:
+    st.session_state.playing = False
+
+
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("▶ Play / Pause"):
+        st.session_state.playing = not st.session_state.playing
+
+
+if st.session_state.playing:
+    st.session_state.frame_idx = (st.session_state.frame_idx + 1) % len(frames)
+    st.rerun()
+
 
 frame_idx = st.slider(
     "Radar čas",
@@ -160,6 +155,15 @@ frame_idx = st.slider(
 )
 
 st.session_state.frame_idx = frame_idx
+
+#frame_idx = st.slider(
+#    "Radar čas",
+#    0,
+#    len(frames) - 1,
+#    len(frames) - 1  # default = newest (important!)
+#)
+
+
 
 
 data = frames[frame_idx]

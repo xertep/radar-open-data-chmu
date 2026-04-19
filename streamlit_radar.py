@@ -115,7 +115,8 @@ file_url = (
 data, extent = load_radar_image(file_url)
 
 fig = plt.figure(figsize=(10, 6))
-ax = plt.axes(projection=ccrs.Mercator())
+#ax = plt.axes(projection=ccrs.Mercator())
+ax = plt.axes(projection=ccrs.PlateCarree())
 
 ax.imshow(
     data,

@@ -1,0 +1,8 @@
+streamlit
+requests
+h5py
+matplotlib
+cartopy
+geopandas
+numpy
+pandas

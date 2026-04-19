@@ -6,3 +6,4 @@ cartopy
 geopandas
 numpy
 pandas
+scipy

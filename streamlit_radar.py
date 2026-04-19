@@ -96,7 +96,11 @@ def get_extent(file_url):
                 where["UL_lat"]
             ]
 
+def format_time(file_url):
+    ts = file_url.split("_")[-1].replace(".hdf", "")
+    dt = datetime.strptime(ts, "%Y%m%d%H%M%S")
 
+    return dt.strftime("%d.%m. %H:%M UTC")
 
 @st.cache_data(show_spinner=False)
 def load_kraje():
@@ -106,6 +110,20 @@ def load_kraje():
 
 kraje = load_kraje()
 
+
+if "playing" not in st.session_state:
+    st.session_state.playing = False
+
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("▶ Play / Pause"):
+        st.session_state.playing = not st.session_state.playing
+
+if st.session_state.playing:
+    frame_idx = (frame_idx + 1) % len(frames)
+    st.session_state.frame_idx = frame_idx
+    st.rerun()
 
 
 radar_files = get_latest_radar_files()
@@ -123,12 +141,26 @@ if not radar_files:
 
 frames = load_radar_batch(file_urls)
 
+#frame_idx = st.slider(
+#    "Radar čas",
+#    0,
+#    len(frames) - 1,
+#    len(frames) - 1  # default = newest (important!)
+#)
+
+
+if "frame_idx" not in st.session_state:
+    st.session_state.frame_idx = len(frames) - 1
+
 frame_idx = st.slider(
     "Radar čas",
     0,
     len(frames) - 1,
-    len(frames) - 1  # default = newest (important!)
+    st.session_state.frame_idx
 )
+
+st.session_state.frame_idx = frame_idx
+
 
 data = frames[frame_idx]
 
@@ -157,6 +189,15 @@ ax.add_geometries(
 )
 
 ax.set_axis_off()
+
+ax.text(
+    0.02, 0.02,
+    format_time(file_urls[frame_idx]),
+    transform=ax.transAxes,
+    fontsize=10,
+    color="white",
+    bbox=dict(facecolor="black", alpha=0.5, edgecolor="none")
+)
 
 st.pyplot(fig)
 plt.close(fig)

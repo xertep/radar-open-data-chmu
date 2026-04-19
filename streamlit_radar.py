@@ -40,7 +40,7 @@ def get_latest_radar_files(n=10):
         return []
 
 
-def inspect_hdf(file_url):
+def inspect_radar_data(file_url):
     response = requests.get(file_url)
     response.raise_for_status()
 
@@ -49,10 +49,18 @@ def inspect_hdf(file_url):
         tmp.flush()
 
         with h5py.File(tmp.name, "r") as f:
-            def walk(name, obj):
-                st.write(name)
+            data = f["dataset1/data1/data"][:]
 
-            f.visititems(walk)
+            st.write("Shape:", data.shape)
+            st.write("Dtype:", data.dtype)
+
+            st.write("where attrs:")
+            for k, v in f["where"].attrs.items():
+                st.write(k, v)
+
+            st.write("data attrs:")
+            for k, v in f["dataset1/data1/what"].attrs.items():
+                st.write(k, v)
 
 
 radar_files = get_latest_radar_files()
@@ -79,5 +87,5 @@ file_url = (
 
 st.write(file_url)
 
-inspect_hdf(file_url)
+inspect_radar_data(file_url)
 

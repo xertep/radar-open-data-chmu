@@ -126,7 +126,7 @@ ax.imshow(
     interpolation="nearest"
 )
 
-ax.set_extent([11.2, 19.7, 47.8, 51.7], crs=ccrs.PlateCarree())
+ax.set_extent([11.2, 19.7, 47.8, 51.7], crs=ccrs.Mercator())
 
 ax.add_feature(cfeature.BORDERS, linewidth=1)
 ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
@@ -139,7 +139,7 @@ ax.add_geometries(
     linewidth=0.4
 )
 
-ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
+ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.Mercator())
 ax.set_axis_off()
 
 st.pyplot(fig)

@@ -96,6 +96,41 @@ def get_extent(file_url):
                 where["UL_lat"]
             ]
 
+@st.cache_data(show_spinner=False)
+def render_frames(frames, extent, kraje):
+    rendered = []
+
+    for data in frames:
+        fig = plt.figure(figsize=(10, 6))
+        ax = plt.axes(projection=ccrs.Mercator())
+
+        ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
+
+        ax.imshow(
+            data,
+            origin="lower",
+            extent=extent,
+            transform=ccrs.PlateCarree(),
+            interpolation="nearest"
+        )
+
+        ax.add_feature(cfeature.BORDERS, linewidth=1)
+        ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
+
+        ax.add_geometries(
+            kraje,
+            crs=ccrs.PlateCarree(),
+            edgecolor="black",
+            facecolor="none",
+            linewidth=0.4
+        )
+
+        ax.set_axis_off()
+
+        rendered.append(fig)
+
+    return rendered
+
 
 @st.cache_data(show_spinner=False)
 def load_kraje():
@@ -129,33 +164,7 @@ frame_idx = st.slider(
     len(frames) - 1  # default = newest (important!)
 )
 
-data = frames[frame_idx]
-
-fig = plt.figure(figsize=(10, 6))
-ax = plt.axes(projection=ccrs.Mercator())
-
-ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
-
-ax.imshow(
-    data,
-    origin="lower",
-    extent=extent,
-    transform=ccrs.PlateCarree(),
-    interpolation="nearest"
-)
-
-ax.add_feature(cfeature.BORDERS, linewidth=1)
-ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
-
-ax.add_geometries(
-    kraje,
-    crs=ccrs.PlateCarree(),
-    edgecolor="black",
-    facecolor="none",
-    linewidth=0.4
-)
-
-ax.set_axis_off()
-
+rendered_frames = render_frames(frames, extent, kraje)
+fig = rendered_frames[frame_idx]
 st.pyplot(fig)
 plt.close(fig)

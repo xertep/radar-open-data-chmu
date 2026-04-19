@@ -45,6 +45,38 @@ def get_latest_radar_files(n=10):
     except Exception:
         return []
 
+@st.cache_data(ttl=60, show_spinner=False)
+def load_radar_batch(file_urls):
+    frames = []
+
+    for url in file_urls:
+        response = requests.get(url)
+        response.raise_for_status()
+
+        with tempfile.NamedTemporaryFile(suffix=".hdf") as tmp:
+            tmp.write(response.content)
+            tmp.flush()
+
+            with h5py.File(tmp.name, "r") as f:
+                raw = f["dataset1/data1/data"][:]
+                attrs = f["dataset1/data1/what"].attrs
+                where = f["where"].attrs
+
+                gain = attrs["gain"]
+                offset = attrs["offset"]
+                nodata = attrs["nodata"]
+                undetect = attrs["undetect"]
+
+                data = raw.astype(float)
+                data[raw == nodata] = np.nan
+                data[raw == undetect] = np.nan
+
+                data = data * gain + offset
+
+                frames.append(data)
+
+    return frames
+
 
 @st.cache_data(show_spinner=False)
 def load_kraje():
@@ -106,16 +138,25 @@ selected_file = st.select_slider(
 )
 
 
-file_url = (
-    "https://opendata.chmi.cz/meteorology/weather/radar/composite/maxz/hdf5/"
-    + selected_file
+base_url = "https://opendata.chmi.cz/meteorology/weather/radar/composite/maxz/hdf5/"
+
+file_urls = [
+    base_url + f for f in radar_files
+]
+
+frames = load_radar_batch(file_urls)
+
+frame_idx = st.slider(
+    "Radar čas",
+    0,
+    len(frames) - 1,
+    0
 )
 
 
-data, extent = load_radar_image(file_url)
+data = frames[frame_idx]
 
 fig = plt.figure(figsize=(10, 6))
-#ax = plt.axes(projection=ccrs.Mercator())
 ax = plt.axes(projection=ccrs.Mercator())
 
 ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
@@ -127,8 +168,6 @@ ax.imshow(
     transform=ccrs.PlateCarree(),
     interpolation="nearest"
 )
-
-#ax.set_extent([11.2, 19.7, 47.8, 51.7], crs=ccrs.PlateCarree())
 
 ax.add_feature(cfeature.BORDERS, linewidth=1)
 ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
@@ -145,5 +184,3 @@ ax.set_axis_off()
 
 st.pyplot(fig)
 plt.close(fig)
-
-st.write(file_url)

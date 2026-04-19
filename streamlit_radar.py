@@ -121,7 +121,7 @@ ax.imshow(
     data,
     origin="lower",
     extent=extent,
-    transform=ccrs.PlateCarree()
+    transform=ccrs.Mercator()
 )
 
 ax.add_feature(cfeature.BORDERS, linewidth=1)

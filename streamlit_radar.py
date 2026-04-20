@@ -66,6 +66,51 @@ def load_kraje():
     gdf["geometry"] = gdf.geometry.simplify(0.02, preserve_topology=True)
     return gdf.geometry
 
+@st.cache_data(ttl=60, show_spinner=False)
+def render_frames(images, radar_files, kraje):
+    rendered = []
+
+    for img, filename in zip(images, radar_files):
+        fig = plt.figure(figsize=(10, 6))
+        ax = plt.axes(projection=ccrs.Mercator())
+
+        ax.set_facecolor("white")
+        ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
+
+        ax.imshow(
+            img,
+            origin="upper",
+            extent=PNG_EXTENT,
+            transform=ccrs.PlateCarree()
+        )
+
+        ax.add_feature(cfeature.BORDERS, linewidth=1)
+        ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
+
+        ax.add_geometries(
+            kraje,
+            crs=ccrs.PlateCarree(),
+            edgecolor="black",
+            facecolor="none",
+            linewidth=0.4
+        )
+
+        ax.set_axis_off()
+
+        ax.text(
+            0.02,
+            0.02,
+            format_time(filename),
+            transform=ax.transAxes,
+            fontsize=10,
+            color="black",
+            bbox=dict(facecolor="white", alpha=0.7, edgecolor="none")
+        )
+
+        rendered.append(fig)
+
+    return rendered
+
 
 def format_time(filename):
     ts = filename.split(".")[2] + filename.split(".")[3]
@@ -101,44 +146,7 @@ frame_idx = st.slider(
 st.session_state.frame_idx = frame_idx
 
 
-img = frames[frame_idx]
-
-fig = plt.figure(figsize=(10, 6))
-ax = plt.axes(projection=ccrs.Mercator())
-
-ax.set_facecolor("white")
-
-ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
-
-ax.imshow(
-    img,
-    origin="upper",
-    extent=PNG_EXTENT,
-    transform=ccrs.PlateCarree()
-)
-
-ax.add_feature(cfeature.BORDERS, linewidth=1)
-ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
-
-ax.add_geometries(
-    kraje,
-    crs=ccrs.PlateCarree(),
-    edgecolor="black",
-    facecolor="none",
-    linewidth=0.4
-)
-
-ax.set_axis_off()
-
-ax.text(
-    0.02,
-    0.02,
-    format_time(radar_files[frame_idx]),
-    transform=ax.transAxes,
-    fontsize=10,
-    color="black",
-    bbox=dict(facecolor="white", alpha=0.7, edgecolor="none")
-)
+rendered_frames = render_frames(frames, radar_files, kraje)
+fig = rendered_frames[frame_idx]
 
 st.pyplot(fig)
-plt.close(fig)

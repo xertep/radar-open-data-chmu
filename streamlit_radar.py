@@ -104,17 +104,20 @@ if "playing" not in st.session_state:
 if "frame_idx" not in st.session_state:
     st.session_state.frame_idx = len(frames) - 1
 
+if "slider_value" not in st.session_state:
+    st.session_state.slider_value = st.session_state.frame_idx
 
-slider_value = st.slider(
+
+st.slider(
     "Radarový snímek",
     0,
     len(frames) - 1,
-    st.session_state.frame_idx,
+    key="slider_value",
     disabled=st.session_state.playing
 )
 
 if not st.session_state.playing:
-    st.session_state.frame_idx = slider_value
+    st.session_state.frame_idx = st.session_state.slider_value
 
 if st.button("▶ Play / Pause"):
     st.session_state.playing = not st.session_state.playing
@@ -133,5 +136,6 @@ if st.session_state.playing:
         st.session_state.frame_idx + 1
     ) % len(combined_frames)
 
+    st.session_state.slider_value = st.session_state.frame_idx
 
     st.rerun()

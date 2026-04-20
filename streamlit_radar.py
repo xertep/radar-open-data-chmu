@@ -79,6 +79,22 @@ def build_combined_frames(frames, border_overlay):
 
     return combined_frames
 
+@st.cache_resource
+def build_gif(frames):
+    buf = BytesIO()
+
+    frames[0].save(
+        buf,
+        format="GIF",
+        save_all=True,
+        append_images=frames[1:],
+        duration=400,
+        loop=0
+    )
+
+    buf.seek(0)
+    return buf.getvalue()
+
 def format_time(filename):
     ts = filename.split(".")[2] + filename.split(".")[3]
     dt = datetime.strptime(ts, "%Y%m%d%H%M")
@@ -98,44 +114,6 @@ file_urls = [BASE_URL + f for f in radar_files]
 frames = load_radar_images(file_urls)
 combined_frames = build_combined_frames(frames, border_overlay)
 
-if "playing" not in st.session_state:
-    st.session_state.playing = False
+gif_data = build_gif(combined_frames)
 
-if "frame_idx" not in st.session_state:
-    st.session_state.frame_idx = len(frames) - 1
-
-if "slider_value" not in st.session_state:
-    st.session_state.slider_value = st.session_state.frame_idx
-
-
-st.slider(
-    "Radarový snímek",
-    0,
-    len(frames) - 1,
-    key="slider_value",
-    disabled=st.session_state.playing
-)
-
-if not st.session_state.playing:
-    st.session_state.frame_idx = st.session_state.slider_value
-
-if st.button("▶ Play / Pause"):
-    st.session_state.playing = not st.session_state.playing
-
-image_placeholder = st.empty()
-
-image_placeholder.image(
-    combined_frames[st.session_state.frame_idx],
-    use_container_width=True
-)
-
-if st.session_state.playing:
-    time.sleep(0.4)
-
-    st.session_state.frame_idx = (
-        st.session_state.frame_idx + 1
-    ) % len(combined_frames)
-
-    st.session_state.slider_value = st.session_state.frame_idx
-
-    st.rerun()
+st.image(gif_data, use_container_width=True)

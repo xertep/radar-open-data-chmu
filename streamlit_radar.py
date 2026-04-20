@@ -26,7 +26,7 @@ MARKERS = [
     (16.5642, 49.2147)    # second place
 ]
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=60, show_spinner=True)
 def get_latest_radar_files(n=20):
     try:
         response = requests.get(BASE_URL, timeout=10)
@@ -52,7 +52,7 @@ def get_latest_radar_files(n=20):
         return []
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=60, show_spinner=True)
 def load_radar_images(file_urls):
     images = []
     session = requests.Session()

@@ -66,7 +66,7 @@ def load_radar_images(file_urls):
 @st.cache_data(show_spinner=False)
 def load_kraje():
     gdf = gpd.read_file("kraje_wgs84.geojson")
-    gdf["geometry"] = gdf.geometry.simplify(0.02, preserve_topology=True)
+    gdf["geometry"] = gdf.geometry.simplify(0.013, preserve_topology=True)
     return gdf.geometry
 
 
@@ -88,15 +88,15 @@ def render_frames(images, radar_files):
             transform=ccrs.PlateCarree()
         )
 
-        ax.add_feature(cfeature.BORDERS, linewidth=1)
-        ax.add_feature(cfeature.COASTLINE, linewidth=0.8)
+        ax.add_feature(cfeature.BORDERS, edgecolor="magenta", linewidth=2.0)
+        ax.add_feature(cfeature.COASTLINE, edgecolor="magenta", linewidth=2.0)
 
         ax.add_geometries(
             kraje,
             crs=ccrs.PlateCarree(),
             edgecolor="magenta",
             facecolor="none",
-            linewidth=1.5
+            linewidth=1.2
         )
 
         ax.set_axis_off()
@@ -178,3 +178,7 @@ if st.session_state.playing:
 
 else:
     image_placeholder.image(rendered_frames[st.session_state.frame_idx])
+
+st.write("radar_files:", len(radar_files))
+st.write("frames:", len(frames))
+st.write("rendered_frames:", len(rendered_frames))

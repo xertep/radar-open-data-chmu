@@ -144,15 +144,36 @@ frames = load_radar_images(file_urls)
 if "frame_idx" not in st.session_state:
     st.session_state.frame_idx = len(frames) - 1
 
+def update_frame():
+    st.session_state.frame_idx = st.session_state.slider_frame
 
-frame_idx = st.slider(
+st.slider(
     "Radarový snímek",
     0,
     len(frames) - 1,
-    st.session_state.frame_idx
+    key="slider_frame",
+    value=st.session_state.frame_idx,
+    on_change=update_frame
 )
 
-st.session_state.frame_idx = frame_idx
+frame_idx = st.session_state.frame_idx
+
+if "playing" not in st.session_state:
+    st.session_state.playing = False
+
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("▶ / ⏸"):
+        st.session_state.playing = not st.session_state.playing
+
+if st.session_state.playing:
+    import time
+    time.sleep(0.5)   # animation speed
+    st.session_state.frame_idx = (
+        st.session_state.frame_idx + 1
+    ) % len(frames)
+    st.rerun()
 
 
 rendered_frames = render_frames(frames, radar_files)

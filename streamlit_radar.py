@@ -61,7 +61,23 @@ def load_radar_images(file_urls):
 def load_border_overlay():
     return Image.open("border_overlay.png").convert("RGBA")
 
+@st.cache_data(show_spinner=False)
+def build_combined_frames(frames, border_overlay):
+    combined_frames = []
 
+    for radar_img in frames:
+        radar_img = radar_img.convert("RGBA")
+
+        white_bg = Image.new("RGBA", radar_img.size, "white")
+        white_bg.paste(radar_img, (0, 0), radar_img)
+
+        overlay = border_overlay.resize(radar_img.size)
+
+        combined = Image.alpha_composite(white_bg, overlay)
+
+        combined_frames.append(combined)
+
+    return combined_frames
 
 def format_time(filename):
     ts = filename.split(".")[2] + filename.split(".")[3]
@@ -80,6 +96,7 @@ if not radar_files:
 
 file_urls = [BASE_URL + f for f in radar_files]
 frames = load_radar_images(file_urls)
+combined_frames = build_combined_frames(frames, border_overlay)
 
 if "playing" not in st.session_state:
     st.session_state.playing = False
@@ -87,35 +104,29 @@ if "playing" not in st.session_state:
 if "frame_idx" not in st.session_state:
     st.session_state.frame_idx = len(frames) - 1
 
-frame_idx = st.slider(
+st.slider(
     "Radarový snímek",
     0,
     len(frames) - 1,
-    st.session_state.frame_idx,
+    key="frame_idx",
     disabled=st.session_state.playing
 )
-
-if not st.session_state.playing:
-    st.session_state.frame_idx = frame_idx
 
 if st.button("▶ Play / Pause"):
     st.session_state.playing = not st.session_state.playing
 
 image_placeholder = st.empty()
 
+image_placeholder.image(
+    combined_frames[st.session_state.frame_idx],
+    use_container_width=True
+)
+
 if st.session_state.playing:
     time.sleep(0.4)
 
     st.session_state.frame_idx = (
         st.session_state.frame_idx + 1
-    ) % len(frames)
+    ) % len(combined_frames)
 
     st.rerun()
-
-radar_img = frames[st.session_state.frame_idx].convert("RGBA")
-
-overlay = border_overlay.resize(radar_img.size)
-
-combined = Image.alpha_composite(radar_img, overlay)
-
-image_placeholder.image(combined, use_container_width=True)

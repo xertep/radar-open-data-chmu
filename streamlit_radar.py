@@ -5,7 +5,7 @@ from datetime import datetime
 from io import BytesIO
 from zoneinfo import ZoneInfo
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from io import BytesIO
 import time
@@ -16,6 +16,10 @@ BASE_URL = "https://opendata.chmi.cz/meteorology/weather/radar/composite/maxz/pn
 # full PNG image extent from CHMI documentation
 PNG_EXTENT = [11.267, 20.770, 48.047, 52.167]
 
+MARKERS = [
+    (16.1113, 49.0546),   # first place
+    (16.5642, 49.2147)    # second place
+]
 
 @st.cache_data(ttl=60, show_spinner=False)
 def get_latest_radar_files(n=20):
@@ -61,6 +65,14 @@ def load_radar_images(file_urls):
 def load_border_overlay():
     return Image.open("border_overlay.png").convert("RGBA")
 
+def lonlat_to_pixel(lon, lat, width, height):
+    min_lon, max_lon, min_lat, max_lat = PNG_EXTENT
+
+    x = int((lon - min_lon) / (max_lon - min_lon) * width)
+    y = int((max_lat - lat) / (max_lat - min_lat) * height)
+
+    return x, y
+
 @st.cache_resource
 def build_combined_frames(frames, border_overlay):
     combined_frames = []
@@ -74,6 +86,17 @@ def build_combined_frames(frames, border_overlay):
         overlay = border_overlay.resize(radar_img.size)
 
         combined = Image.alpha_composite(white_bg, overlay)
+
+        draw = ImageDraw.Draw(combined)
+
+        width, height = combined.size
+
+        for lon, lat in MARKERS:
+            x, y = lonlat_to_pixel(lon, lat, width, height)
+
+            size = 8
+            draw.line((x-size, y, x+size, y), fill="purple", width=2)
+            draw.line((x, y-size, x, y+size), fill="blue", width=2)
 
         combined_frames.append(combined)
 

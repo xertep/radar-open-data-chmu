@@ -51,7 +51,7 @@ def get_latest_radar_files(n=20):
         return []
 
 
-@st.cache_data(ttl=60, show_spinner=False)
+@st.cache_data(ttl=60, show_spinner="Načítám data...")
 def load_radar_images(file_urls):
     images = []
     session = requests.Session()
@@ -130,6 +130,11 @@ def format_time(filename):
     return dt.strftime("%d.%m. %H:%M")
 
 border_overlay = load_border_overlay()
+
+if st.button("🔄 Aktualizovat radar"):
+    st.cache_data.clear()
+    st.cache_resource.clear()
+    st.rerun()
 
 radar_files = get_latest_radar_files()
 

@@ -11,7 +11,7 @@ import time
 
 
 st.set_page_config(
-    page_title="Radar (open data ČHMÚ)",  # this changes the browser tab title
+    page_title="Radar test (open data ČHMÚ)",  # this changes the browser tab title
     page_icon="⛈️"                     # optional: emoji or path to an image
 )
 

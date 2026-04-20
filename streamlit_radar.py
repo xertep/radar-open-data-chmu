@@ -7,7 +7,6 @@ from zoneinfo import ZoneInfo
 
 from PIL import Image, ImageDraw
 
-from io import BytesIO
 import time
 
 
@@ -52,7 +51,7 @@ def get_latest_radar_files(n=20):
         return []
 
 
-@st.cache_data(ttl=60, show_spinner="Načítám data...")
+@st.cache_data(ttl=60, show_spinner=False)
 def load_radar_images(file_urls):
     images = []
     session = requests.Session()

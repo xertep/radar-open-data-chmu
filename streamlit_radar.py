@@ -94,9 +94,9 @@ def render_frames(images, radar_files):
         ax.add_geometries(
             kraje,
             crs=ccrs.PlateCarree(),
-            edgecolor="black",
+            edgecolor="magenta",
             facecolor="none",
-            linewidth=0.4
+            linewidth=1.5
         )
 
         ax.set_axis_off()
@@ -149,10 +149,12 @@ frame_idx = st.slider(
     "Radarový snímek",
     0,
     len(frames) - 1,
-    st.session_state.frame_idx
+    st.session_state.frame_idx,
+    disabled=st.session_state.playing
 )
 
-st.session_state.frame_idx = frame_idx
+if not st.session_state.playing:
+    st.session_state.frame_idx = frame_idx
 
 if "playing" not in st.session_state:
     st.session_state.playing = False
@@ -162,19 +164,16 @@ if st.button("▶ Play / Pause"):
 
 image_placeholder = st.empty()
 
+if st.session_state.playing:
+    image_placeholder.image(rendered_frames[st.session_state.frame_idx])
 
-rendered_frames = render_frames(frames, radar_files)
-fig = rendered_frames[frame_idx]
+    time.sleep(0.4)
 
-while st.session_state.playing:
-    for i in range(len(rendered_frames)):
-        image_placeholder.image(rendered_frames[i])
-        st.session_state.frame_idx = i
-        time.sleep(0.4)
+    st.session_state.frame_idx = (
+        st.session_state.frame_idx + 1
+    ) % len(rendered_frames)
 
-        if not st.session_state.playing:
-            break
+    st.rerun()
 
-    st.session_state.playing = False
 else:
-    image_placeholder.image(rendered_frames[frame_idx])
+    image_placeholder.image(rendered_frames[st.session_state.frame_idx])

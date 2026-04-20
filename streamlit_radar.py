@@ -142,6 +142,9 @@ file_urls = [BASE_URL + f for f in radar_files]
 frames = load_radar_images(file_urls)
 
 
+if "playing" not in st.session_state:
+    st.session_state.playing = False
+
 if "frame_idx" not in st.session_state:
     st.session_state.frame_idx = len(frames) - 1
 
@@ -155,9 +158,6 @@ frame_idx = st.slider(
 
 if not st.session_state.playing:
     st.session_state.frame_idx = frame_idx
-
-if "playing" not in st.session_state:
-    st.session_state.playing = False
 
 if st.button("▶ Play / Pause"):
     st.session_state.playing = not st.session_state.playing

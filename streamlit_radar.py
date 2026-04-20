@@ -66,32 +66,8 @@ def load_kraje():
     gdf["geometry"] = gdf.geometry.simplify(0.013, preserve_topology=True)
     return gdf.geometry
 
-def create_border_overlay():
-    fig = plt.figure(figsize=(10, 6))
-    ax = plt.axes(projection=ccrs.Mercator())
 
-    ax.set_extent(PNG_EXTENT, crs=ccrs.PlateCarree())
-    ax.set_axis_off()
-
-    ax.add_feature(cfeature.BORDERS, edgecolor="magenta", linewidth=2.0)
-    ax.add_feature(cfeature.COASTLINE, edgecolor="magenta", linewidth=2.0)
-
-    ax.add_geometries(
-        kraje,
-        crs=ccrs.PlateCarree(),
-        edgecolor="magenta",
-        facecolor="none",
-        linewidth=1.2
-    )
-
-    buf = BytesIO()
-    fig.savefig(buf, format="png", transparent=True, bbox_inches="tight", pad_inches=0)
-    plt.close(fig)
-
-    buf.seek(0)
-    return Image.open(buf).convert("RGBA")
-
-border_layer = create_border_overlay()
+border_layer = Image.new("RGBA", frames[0].size, (0, 0, 0, 0))
 
 
 def format_time(filename):
@@ -136,7 +112,7 @@ image_placeholder = st.empty()
 radar_img = frames[st.session_state.frame_idx].convert("RGBA")
 
 combined = Image.alpha_composite(
-    border_layer.resize(radar_img.size),
+    border_layer,
     radar_img
 )
 

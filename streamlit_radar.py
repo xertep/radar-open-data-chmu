@@ -70,7 +70,7 @@ def load_kraje():
 
 
 @st.cache_resource
-def render_frames(images, radar_files, kraje):
+def render_frames(images, radar_files):
     rendered = []
 
     for img, filename in zip(images, radar_files):
@@ -155,7 +155,7 @@ frame_idx = st.slider(
 st.session_state.frame_idx = frame_idx
 
 
-rendered_frames = render_frames(frames, radar_files, kraje)
+rendered_frames = render_frames(frames, radar_files)
 fig = rendered_frames[frame_idx]
 
 st.image(rendered_frames[frame_idx])

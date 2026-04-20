@@ -61,7 +61,7 @@ def load_radar_images(file_urls):
 def load_border_overlay():
     return Image.open("border_overlay.png").convert("RGBA")
 
-@st.cache_data(show_spinner=False)
+@st.cache_resource
 def build_combined_frames(frames, border_overlay):
     combined_frames = []
 
@@ -104,13 +104,19 @@ if "playing" not in st.session_state:
 if "frame_idx" not in st.session_state:
     st.session_state.frame_idx = len(frames) - 1
 
+if "slider_idx" not in st.session_state:
+    st.session_state.slider_idx = st.session_state.frame_idx
+
 st.slider(
     "Radarový snímek",
     0,
     len(frames) - 1,
-    key="frame_idx",
+    key="slider_idx",
     disabled=st.session_state.playing
 )
+
+if not st.session_state.playing:
+    st.session_state.frame_idx = st.session_state.slider_idx
 
 if st.button("▶ Play / Pause"):
     st.session_state.playing = not st.session_state.playing
@@ -128,5 +134,7 @@ if st.session_state.playing:
     st.session_state.frame_idx = (
         st.session_state.frame_idx + 1
     ) % len(combined_frames)
+
+    st.session_state.slider_idx = st.session_state.frame_idx
 
     st.rerun()

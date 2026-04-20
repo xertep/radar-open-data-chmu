@@ -140,6 +140,7 @@ if not radar_files:
 
 file_urls = [BASE_URL + f for f in radar_files]
 frames = load_radar_images(file_urls)
+rendered_frames = render_frames(frames, radar_files)
 
 
 if "playing" not in st.session_state:

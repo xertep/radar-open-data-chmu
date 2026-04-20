@@ -95,8 +95,8 @@ def build_combined_frames(frames, border_overlay):
             x, y = lonlat_to_pixel(lon, lat, width, height)
 
             size = 8
-            draw.line((x-size, y, x+size, y), fill="purple", width=2)
-            draw.line((x, y-size, x, y+size), fill="blue", width=2)
+            draw.line((x-size, y, x+size, y), fill="black", size = 5, width=2)
+            draw.line((x, y-size, x, y+size), fill="black", size = 5, width=2)
 
         combined_frames.append(combined)
 

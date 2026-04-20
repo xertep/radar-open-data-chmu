@@ -12,6 +12,8 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import geopandas as gpd
 
+from io import BytesIO
+
 
 BASE_URL = "https://opendata.chmi.cz/meteorology/weather/radar/composite/maxz/png_masked/"
 
@@ -66,7 +68,8 @@ def load_kraje():
     gdf["geometry"] = gdf.geometry.simplify(0.02, preserve_topology=True)
     return gdf.geometry
 
-@st.cache_data(ttl=60, show_spinner=False)
+
+@st.cache_resource
 def render_frames(images, radar_files, kraje):
     rendered = []
 
@@ -75,7 +78,7 @@ def render_frames(images, radar_files, kraje):
         ax = plt.axes(projection=ccrs.Mercator())
 
         ax.set_facecolor("white")
-        ax.set_extent([12, 19, 48.3, 51.2], crs=ccrs.PlateCarree())
+        ax.set_extent(PNG_EXTENT, crs=ccrs.PlateCarree())
 
         ax.imshow(
             img,
@@ -107,7 +110,13 @@ def render_frames(images, radar_files, kraje):
             bbox=dict(facecolor="white", alpha=0.7, edgecolor="none")
         )
 
-        rendered.append(fig)
+        buf = BytesIO()
+        fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0)
+        buf.seek(0)
+
+        rendered.append(buf.getvalue())
+
+        plt.close(fig)
 
     return rendered
 
@@ -149,4 +158,4 @@ st.session_state.frame_idx = frame_idx
 rendered_frames = render_frames(frames, radar_files, kraje)
 fig = rendered_frames[frame_idx]
 
-st.pyplot(fig)
+st.image(rendered_frames[frame_idx])

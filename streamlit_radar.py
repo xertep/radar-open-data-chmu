@@ -13,6 +13,7 @@ import cartopy.feature as cfeature
 import geopandas as gpd
 
 from io import BytesIO
+import time
 
 
 BASE_URL = "https://opendata.chmi.cz/meteorology/weather/radar/composite/maxz/png_masked/"
@@ -144,39 +145,36 @@ frames = load_radar_images(file_urls)
 if "frame_idx" not in st.session_state:
     st.session_state.frame_idx = len(frames) - 1
 
-def update_frame():
-    st.session_state.frame_idx = st.session_state.slider_frame
-
-st.slider(
+frame_idx = st.slider(
     "Radarový snímek",
     0,
     len(frames) - 1,
-    key="slider_frame",
-    value=st.session_state.frame_idx,
-    on_change=update_frame
+    st.session_state.frame_idx
 )
 
-frame_idx = st.session_state.frame_idx
+st.session_state.frame_idx = frame_idx
 
 if "playing" not in st.session_state:
     st.session_state.playing = False
 
-col1, col2 = st.columns(2)
+if st.button("▶ Play / Pause"):
+    st.session_state.playing = not st.session_state.playing
 
-with col1:
-    if st.button("▶ / ⏸"):
-        st.session_state.playing = not st.session_state.playing
-
-if st.session_state.playing:
-    import time
-    time.sleep(0.5)   # animation speed
-    st.session_state.frame_idx = (
-        st.session_state.frame_idx + 1
-    ) % len(frames)
-    st.rerun()
+image_placeholder = st.empty()
 
 
 rendered_frames = render_frames(frames, radar_files)
 fig = rendered_frames[frame_idx]
 
-st.image(rendered_frames[frame_idx])
+while st.session_state.playing:
+    for i in range(len(rendered_frames)):
+        image_placeholder.image(rendered_frames[i])
+        st.session_state.frame_idx = i
+        time.sleep(0.4)
+
+        if not st.session_state.playing:
+            break
+
+    st.session_state.playing = False
+else:
+    image_placeholder.image(rendered_frames[frame_idx])

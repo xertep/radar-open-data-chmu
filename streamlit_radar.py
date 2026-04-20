@@ -11,7 +11,7 @@ import time
 
 
 st.set_page_config(
-    page_title="Radar test (open data ČHMÚ)",  # this changes the browser tab title
+    page_title="Radar (open data ČHMÚ)",  # this changes the browser tab title
     page_icon="⛈️"                     # optional: emoji or path to an image
 )
 
@@ -70,42 +70,37 @@ def load_radar_images(file_urls):
 def load_border_overlay():
     return Image.open("border_overlay.png").convert("RGBA")
 
-@st.cache_resource
-def load_terrain():
-    return Image.open("terrain_data.png").convert("RGBA")
-
 def lonlat_to_pixel(extent, lon, lat, width, height):
     x = int((lon - extent[0]) / (extent[1] - extent[0]) * width)
     y = int((extent[3] - lat) / (extent[3] - extent[2]) * height)
     return x, y
 
 @st.cache_resource
-def build_combined_frames(frames, terrain, border_overlay):
+def build_combined_frames(frames, border_overlay):
     combined_frames = []
 
     for radar_img in frames:
         radar_img = radar_img.convert("RGBA")
         width, height = radar_img.size
 
-        base = Image.new("RGBA", radar_img.size, "white")
+        white_bg = Image.new("RGBA", radar_img.size, "white")
+        white_bg.paste(radar_img, (0, 0), radar_img)
 
+        # where the smaller radar map sits inside the full PNG
         x1, y1 = lonlat_to_pixel(FULL_EXTENT, DATA_EXTENT[0], DATA_EXTENT[3], width, height)
         x2, y2 = lonlat_to_pixel(FULL_EXTENT, DATA_EXTENT[1], DATA_EXTENT[2], width, height)
 
         map_w = x2 - x1
         map_h = y2 - y1
 
-        terrain_small = terrain.resize((map_w, map_h))
-        border_small = border_overlay.resize((map_w, map_h))
+        # resize border only for the actual radar map area
+        overlay_small = border_overlay.resize((map_w, map_h))
 
-        base.paste(terrain_small, (x1, y1))
-
-        base = Image.alpha_composite(base, radar_img)
-
+        # transparent full-size overlay
         overlay_full = Image.new("RGBA", radar_img.size, (0, 0, 0, 0))
-        overlay_full.paste(border_small, (x1, y1), border_small)
+        overlay_full.paste(overlay_small, (x1, y1), overlay_small)
 
-        combined = Image.alpha_composite(base, overlay_full)
+        combined = Image.alpha_composite(white_bg, overlay_full)
 
         draw = ImageDraw.Draw(combined)
 
@@ -144,7 +139,6 @@ def format_time(filename):
     return dt.strftime("%d.%m. %H:%M")
 
 border_overlay = load_border_overlay()
-terrain = load_terrain()
 
 if st.button("🔄 Aktualizovat radar"):
     st.cache_data.clear()
@@ -159,7 +153,7 @@ if not radar_files:
 
 file_urls = [BASE_URL + f for f in radar_files]
 frames = load_radar_images(file_urls)
-combined_frames = build_combined_frames(frames, terrain, border_overlay)
+combined_frames = build_combined_frames(frames, border_overlay)
 
 gif_data = build_gif(combined_frames)
 

@@ -28,7 +28,7 @@ MARKERS = [
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def get_latest_radar_files(n=12):
+def get_latest_radar_files(n=20):
     try:
         response = requests.get(BASE_URL, timeout=10)
         response.raise_for_status()

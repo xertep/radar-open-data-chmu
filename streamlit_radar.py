@@ -7,6 +7,8 @@ from zoneinfo import ZoneInfo
 
 from PIL import Image, ImageDraw
 
+import gc
+
 
 st.set_page_config(
     page_title="Radar (open data ČHMÚ)",
@@ -133,7 +135,7 @@ def format_time(filename):
     dt = datetime.strptime(ts, "%Y%m%d%H%M")
     dt = dt.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Europe/Prague"))
 
-    return dt.strftime("%d.%m. %H:%M")
+    return dt.strftime("%d.%m.%y %H:%M")
 
 
 border_overlay = load_border_overlay()
@@ -153,7 +155,8 @@ file_urls = [BASE_URL + f for f in radar_files]
 image_bytes = download_radar_bytes(file_urls)
 
 gif_data = build_gif_from_bytes(image_bytes, border_overlay)
+gc.collect()
+
+st.caption(f"Aktuální radar: od {format_time(radar_files[0])} do {format_time(radar_files[-1])} hod ▼")
 
 st.image(gif_data, use_container_width=True)
-
-st.caption(f"Aktuální radar: {format_time(radar_files[-1])}")
